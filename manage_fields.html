@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head>
+  <title>Manage Fields</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Manage Custom Fields</h1>
+
+    <!-- Search or Dropdown to select a field -->
+    <form method="GET" action="/manage_fields">
+      <label for="search_field">Search or Select a Field:</label>
+      <input type="text" id="search_field" name="search_field" placeholder="Enter field name" value="{{ search_field }}" onkeyup="filterFields()">
+      <select name="field_index" id="field_index" onchange="this.form.submit()">
+        <option value="">Select a Field</option>
+        {% for field in fields %}
+          <option value="{{ loop.index0 }}" {% if selected_field and selected_field['field_name'] == field['field_name'] %}selected{% endif %}>
+            {{ field['field_name'] }}
+          </option>
+        {% endfor %}
+      </select>
+      <button type="submit">Search or Select</button>
+    </form>
+
+    {% if selected_field %}
+      <h3>Edit Field: {{ selected_field['field_name'] }}</h3>
+
+      <form method="POST">
+        <input type="hidden" name="field_index" value="{{ fields.index(selected_field) }}">
+
+        <label for="field_name">Field Name:</label>
+        <input type="text" id="field_name" name="field_name" value="{{ selected_field['field_name'] }}" required><br><br>
+
+        <label for="description">Description:</label>
+        <input type="text" id="description" name="description" value="{{ selected_field['description'] }}"><br><br>
+
+        <label for="required">Required:</label>
+        <select name="required" id="required">
+          <option value="True" {% if selected_field['required'] == 'True' %}selected{% endif %}>Yes</option>
+          <option value="False" {% if selected_field['required'] == 'False' %}selected{% endif %}>No</option>
+        </select><br><br>
+
+        <button type="submit">Update Field</button>
+      </form>
+
+      <!-- Delete Form -->
+      <form method="POST" action="/manage_fields">
+        <input type="hidden" name="delete_field_index" value="{{ fields.index(selected_field) }}">
+        <button type="submit" style="background-color: red; color: white" onclick="return confirm('Are you sure you want to delete this field?')">Delete Field</button>
+      </form>
+    {% else %}
+      <p>No field selected yet.</p>
+    {% endif %}
+
+    <br><br>
+    <a href="/">Back</a>
+  </div>
+
+  <script>
+    // Optional: You can add a live filter for the input field to filter options as you type
+    function filterFields() {
+      var input, filter, select, options, i;
+      input = document.getElementById("search_field");
+      filter = input.value.toLowerCase();
+      select = document.getElementById("field_index");
+      options = select.getElementsByTagName("option");
+
+      for (i = 0; i < options.length; i++) {
+        let option = options[i];
+        if (option.text.toLowerCase().indexOf(filter) > -1) {
+          option.style.display = "block";
+        } else {
+          option.style.display = "none";
+        }
+      }
+    }
+  </script>
+
+</body>
+</html>

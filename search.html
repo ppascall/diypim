@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+<head>
+  <title>Search Products</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .expandable-content {
+      display: none;
+      margin-top: 10px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+
+    .card .title {
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1.1em;
+      color: #007BFF;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table th, table td {
+      padding: 6px;
+      border: 1px solid #ccc;
+    }
+
+    form.delete-form {
+      margin-top: 10px;
+    }
+  </style>
+  <script>
+    function toggleDetails(index) {
+      const el = document.getElementById('details-' + index);
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    const pages = {};  // Track current page for each product
+    const pageSize = 5;
+
+    function renderPage(pid) {
+      const data = window['productData' + pid];
+      const table = document.getElementById("product-table-" + pid);
+      const keys = Object.keys(data);
+      const pageIndex = pages[pid] || 0;
+
+      table.innerHTML = "";
+      const start = pageIndex * pageSize;
+      const end = Math.min(start + pageSize, keys.length);
+
+      for (let i = start; i < end; i++) {
+        const row = `<tr><th>${keys[i]}</th><td>${data[keys[i]]}</td></tr>`;
+        table.innerHTML += row;
+      }
+    }
+
+    function nextPage(pid) {
+      const data = window['productData' + pid];
+      const keys = Object.keys(data);
+      const maxPage = Math.floor((keys.length - 1) / pageSize);
+
+      if ((pages[pid] || 0) < maxPage) {
+        pages[pid] = (pages[pid] || 0) + 1;
+        renderPage(pid);
+      }
+    }
+
+    function prevPage(pid) {
+      if ((pages[pid] || 0) > 0) {
+        pages[pid] = (pages[pid] || 0) - 1;
+        renderPage(pid);
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Search Products</h1>
+    <form method="get">
+      Search:
+      <input type="text" name="query" value="{{ request.args.get('query', '') }}">
+
+      Field:
+      <select name="field_key">
+        <option value="">Any Field</option>
+        {% for field in fields %}
+          <option value="{{ field }}" {% if request.args.get('field_key') == field %}selected{% endif %}>{{ field }}</option>
+        {% endfor %}
+      </select>
+
+      Value:
+      <input type="text" name="field_value" value="{{ request.args.get('field_value', '') }}">
+
+      <input type="submit" value="Search">
+    </form>
+
+    <h2>Results</h2>
+    {% for product in products %}
+      <div class="card">
+        <div class="title" onclick="toggleDetails({{ product.index }})">
+          {{ product.data.get('Product Description EN', 'Unnamed Product') }}
+        </div>
+        <div class="expandable-content" id="details-{{ product.index }}">
+          <table id="product-table-{{ product.index }}"></table>
+          <div style="margin-top:10px;">
+            <button onclick="prevPage({{ product.index }})">Prev</button>
+            <button onclick="nextPage({{ product.index }})">Next</button>
+          </div>
+
+          <form method="get" action="/manage_products">
+            <input type="hidden" name="product_index" value="{{ product.index }}">
+            <input style="background-color: #007BFF; color: white;" type="submit" value="Edit">
+          </form>
+
+          <form method="post" action="/delete/{{ product.index }}" class="delete-form">
+            <input style="background-color: red; color: white" type="submit" value="Delete" onclick="return confirm('Are you sure?');">
+          </form>
+        </div>
+        <script>
+          window['productData{{ product.index }}'] = {{ product.data | tojson }};
+          pages[{{ product.index }}] = 0;
+          renderPage({{ product.index }});
+        </script>
+      </div>
+    {% else %}
+      <p>No results found.</p>
+    {% endfor %}
+
+    <a href="/">Back</a>
+  </div>
+</body>
+</html>

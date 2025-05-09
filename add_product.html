@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+<head>
+  <title>Add Product</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 700px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      font-weight: bold;
+      color: #444;
+    }
+
+    label span.required {
+      color: red;
+      margin-left: 4px;
+      font-weight: normal;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    input[type="submit"], .nav-button {
+      padding: 12px;
+      font-size: 16px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    input[type="submit"]:hover, .nav-button:hover {
+      background-color: #0056b3;
+    }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    a {
+      display: block;
+      margin-top: 20px;
+      text-align: center;
+      color: #666;
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: #000;
+    }
+
+    .field-page {
+      display: none;
+    }
+
+    .field-page.active {
+      display: block;
+    }
+
+    .page-indicator {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Add Product</h1>
+    <form method="post" id="product-form">
+      {% set page_size = 5 %}
+      {% for field in fields %}
+        {% set page = loop.index0 // page_size %}
+        <div class="field-page page-{{ page }} {% if loop.index0 < 5 %}active{% endif %}">
+          <label>
+            {{ field.field_name }}
+            {% if field.required == 'True' %}
+              <span class="required">*</span>
+            {% endif %}
+            <input type="text" name="{{ field.field_name }}" {% if field.required == 'True' %}required{% endif %}>
+          </label>
+        </div>
+      {% endfor %}
+
+      <div class="nav-buttons">
+        <button type="button" class="nav-button" onclick="prevPage()">Previous</button>
+        <button type="button" class="nav-button" onclick="nextPage()">Next</button>
+      </div>
+
+      <input type="submit" value="Add Product">
+    </form>
+
+    <!-- Page indicator -->
+    <div class="page-indicator" id="page-indicator">
+      Page 1 of {{ (fields | length // page_size) + 1 }}
+    </div>
+
+    <a href="/">← Back</a>
+  </div>
+
+  <script>
+    const pages = document.querySelectorAll('.field-page');
+    let currentPage = 0;
+    const totalPages = Math.ceil(pages.length / 5);
+
+    function showPage(index) {
+      pages.forEach((page, i) => {
+        page.classList.toggle('active', i >= index * 5 && i < (index + 1) * 5);
+      });
+
+      // Update the page indicator
+      document.getElementById('page-indicator').textContent = `Page ${index + 1} of ${totalPages}`;
+    }
+
+    function nextPage() {
+      if (currentPage < totalPages - 1) {
+        currentPage++;
+        showPage(currentPage);
+      }
+    }
+
+    function prevPage() {
+      if (currentPage > 0) {
+        currentPage--;
+        showPage(currentPage);
+      }
+    }
+
+    // Initial display
+    showPage(currentPage);
+  </script>
+</body>
+</html>
